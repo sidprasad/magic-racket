@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{CND_CSS}}">
+  <title>CnD Graph Visualization</title>
+</head>
+<body>
+  <div id="cnd-root"></div>
+  <script>
+    const initialGraph = {{CND_GRAPH}};
+    window.addEventListener('message', event => {
+      if (event.data && event.data.type === 'update') {
+        renderCnDGraph(event.data.graph);
+      }
+    });
+    window.renderCnDGraph = window.renderCnDGraph || function(graph) {};
+    window.addEventListener('DOMContentLoaded', () => {
+      renderCnDGraph(initialGraph);
+    });
+  </script>
+  <script src="{{CND_JS}}"></script>
+</body>
+</html>

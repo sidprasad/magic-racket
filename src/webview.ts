@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import * as path from 'path';
 
 export interface CnDGraphAtom {
@@ -44,7 +45,7 @@ export function launchCnDWebview(context: vscode.ExtensionContext, payload: CnDG
   const mediaPath = (file: string) => webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'media', file)));
   const cndJsUri = mediaPath('cnd.js');
   const styleUri = mediaPath('style.css');
-  cndPanel.webview.html = getCnDWebviewContent(cndJsUri, styleUri, payload);
+  cndPanel.webview.html = getCnDWebviewContentFromFile(context, cndJsUri, styleUri, payload);
   cndPanel.onDidDispose(() => { cndPanel = undefined; });
   webview.onDidReceiveMessage(msg => {
     // Optionally handle messages from the webview
@@ -59,35 +60,17 @@ export function showLastCnDGraph(context: vscode.ExtensionContext) {
   }
 }
 
-function getCnDWebviewContent(jsUri: vscode.Uri, cssUri: vscode.Uri, graph: CnDGraph): string {
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <link rel="stylesheet" href="${cssUri}">
-      <title>CnD Graph Visualization</title>
-    </head>
-    <body>
-      <div id="cnd-root"></div>
-      <script>
-        const initialGraph = ${JSON.stringify(graph)};
-        window.addEventListener('message', event => {
-          if (event.data && event.data.type === 'update') {
-            renderCnDGraph(event.data.graph);
-          }
-        });
-        window.renderCnDGraph = window.renderCnDGraph || function(graph) {
-          // This will be replaced by cnd.js
-        };
-        // Initial render
-        window.addEventListener('DOMContentLoaded', () => {
-          renderCnDGraph(initialGraph);
-        });
-      </script>
-      <script src="${jsUri}"></script>
-    </body>
-    </html>
-  `;
+function getCnDWebviewContentFromFile(
+  context: vscode.ExtensionContext,
+  jsUri: vscode.Uri,
+  cssUri: vscode.Uri,
+  graph: CnDGraph
+): string {
+  const htmlPath = path.join(context.extensionPath, 'media', 'cnd.html');
+  let html = fs.readFileSync(htmlPath, 'utf8');
+  html = html
+    .replace('{{CND_JS}}', jsUri.toString())
+    .replace('{{CND_CSS}}', cssUri.toString())
+    .replace('{{CND_GRAPH}}', JSON.stringify(graph));
+  return html;
 }
