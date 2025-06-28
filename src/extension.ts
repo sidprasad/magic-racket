@@ -5,6 +5,7 @@ import * as os from "os";
 import * as com from "./commands";
 import { TaskProvider } from "./tasks";
 import { withLanguageServer } from "./utils";
+import { handleRacketOutputLine } from './cnd-output';
 
 let langClient: LanguageClient;
 let isLangClientRunning = false;
@@ -92,6 +93,17 @@ function configurationChanged() {
   }
 }
 
+// Example: intercept output from terminals (pseudo-hook)
+function interceptTerminalOutput(context: vscode.ExtensionContext, terminals: Map<string, vscode.Terminal>) {
+  // This is a placeholder. In a real implementation, you would hook into the process spawning logic
+  // and listen to stdout lines. For demonstration, we show how to call handleRacketOutputLine.
+  //
+  // For example, if you have a function that receives output lines:
+  // onRacketProcessStdout(line: string) {
+  //   handleRacketOutputLine(context, line);
+  // }
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   printEnvironmentInfo();
   setupLSP();
@@ -118,5 +130,10 @@ export function activate(context: vscode.ExtensionContext): void {
   const openRepl = reg("openRepl", () => com.openRepl(repls));
   const showOutput = reg("showOutputTerminal", () => com.showOutput(terminals));
 
-  context.subscriptions.push(loadInRepl, runInTerminal, executeSelection, openRepl, showOutput);
+  // Register Magic Racket: Show Last CnD Graph command
+  const showLastCnDGraph = vscode.commands.registerCommand('magic-racket.showLastCnDGraph', () => {
+    // Lazy import to avoid circular deps
+    import('./webview').then(mod => mod.showLastCnDGraph(context));
+  });
+  context.subscriptions.push(loadInRepl, runInTerminal, executeSelection, openRepl, showOutput, showLastCnDGraph);
 }

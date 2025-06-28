@@ -211,6 +211,10 @@
       {
         "command": "magic-racket.showOutputTerminal",
         "title": "Racket: Show the output terminal for the current file"
+      },
+      {
+        "command": "magic-racket.showLastCnDGraph",
+        "title": "Magic Racket: Show Last CnD Graph"
       }
     ],
     "menus": {
