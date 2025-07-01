@@ -215,6 +215,18 @@
       {
         "command": "magic-racket.showLastCnDGraph",
         "title": "Magic Racket: Show Last CnD Graph"
+      },
+      {
+        "command": "magic-racket.testCnDGraph",
+        "title": "Magic Racket: Test CnD Graph (Debug)"
+      },
+      {
+        "command": "magic-racket.runWithCnD",
+        "title": "Magic Racket: Run with CnD Detection"
+      },
+      {
+        "command": "magic-racket.showCnDDebug",
+        "title": "Magic Racket: Show CnD Debug Output"
       }
     ],
     "menus": {

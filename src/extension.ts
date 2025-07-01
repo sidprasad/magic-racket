@@ -6,6 +6,7 @@ import * as com from "./commands";
 import { TaskProvider } from "./tasks";
 import { withLanguageServer } from "./utils";
 import { handleRacketOutputLine } from './cnd-output';
+import { createCnDTerminal } from './cnd-terminal';
 
 let langClient: LanguageClient;
 let isLangClientRunning = false;
@@ -119,6 +120,21 @@ export function activate(context: vscode.ExtensionContext): void {
 
   taskProvider = vscode.tasks.registerTaskProvider(TaskProvider.taskType, new TaskProvider());
 
+  // Hook into terminal data to intercept CnD output
+  // Note: This is a simple approach - in production you might want to use a custom terminal
+  
+  // Add command to run Racket file with CnD detection
+  const runWithCnD = vscode.commands.registerCommand('magic-racket.runWithCnD', () => {
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor && activeEditor.document.languageId === 'racket') {
+      const filePath = activeEditor.document.fileName;
+      const terminal = createCnDTerminal(context, filePath);
+      terminal.show();
+    } else {
+      vscode.window.showErrorMessage('Please open a Racket file first');
+    }
+  });
+
   vscode.window.onDidCloseTerminal((terminal) => {
     terminals.forEach((val, key) => val === terminal && terminals.delete(key) && val.dispose());
     repls.forEach((val, key) => val === terminal && repls.delete(key) && val.dispose());
@@ -135,5 +151,32 @@ export function activate(context: vscode.ExtensionContext): void {
     // Lazy import to avoid circular deps
     import('./webview').then(mod => mod.showLastCnDGraph(context));
   });
-  context.subscriptions.push(loadInRepl, runInTerminal, executeSelection, openRepl, showOutput, showLastCnDGraph);
+
+  // Register test CnD command for debugging
+  const testCnDGraph = vscode.commands.registerCommand('magic-racket.testCnDGraph', () => {
+    const testGraph = {
+      atoms: [
+        { id: "A", label: "Node A", type: "Entity" },
+        { id: "B", label: "Node B", type: "Entity" },
+        { id: "C", label: "Node C", type: "Entity" }
+      ],
+      relations: [
+        { src: "A", dst: "B", label: "connects" },
+        { src: "B", dst: "C", label: "links" },
+        { src: "C", dst: "A", label: "back" }
+      ]
+    };
+    // Lazy import to avoid circular deps
+    import('./webview').then(mod => mod.launchCnDWebview(context, testGraph));
+  });
+
+  // Register command to show debug output
+  const showCnDDebug = vscode.commands.registerCommand('magic-racket.showCnDDebug', () => {
+    // Show all debug output channels
+    vscode.commands.executeCommand('workbench.action.output.show.CnD Debug');
+    vscode.commands.executeCommand('workbench.action.output.show.CnD Terminal Debug');
+    vscode.commands.executeCommand('workbench.action.output.show.CnD Webview Debug');
+  });
+
+  context.subscriptions.push(loadInRepl, runInTerminal, executeSelection, openRepl, showOutput, showLastCnDGraph, testCnDGraph, runWithCnD, showCnDDebug);
 }
